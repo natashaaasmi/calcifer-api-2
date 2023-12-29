@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mongodb"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    name String
+    first_name String
+    events Event[]
+    short_profile String?
+    days Day[]
+    longtermMemory Memory[]
+    conversationHistory ConversationHistory?
+    //email String @unique
+}
+
+model ConversationHistory {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    user User @relation(fields: [userId], references: [id])
+    userId String @db.ObjectId @unique
+}
+
+model Day {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    date String @unique
+    user User @relation(fields:[userId],references:[id])
+    userId String @db.ObjectId
+    events Event[] 
+    createdAt DateTime? @default(now())
+    updatedAt DateTime? @updatedAt
+    memory Memory[]
+}
+
+//store events in same format as gcal
+model Event {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    day Day @relation(fields: [start], references: [date])
+    summary String
+    description String?
+    start String
+    end String
+    user User @relation(fields: [userId], references: [id])
+    userId String @db.ObjectId
+    createdAt DateTime? @default(now())
+    updatedAt DateTime? @updatedAt
+    //tags String??[]
+}
+
+model Memory {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    summary String
+    user User @relation(fields: [userId], references: [id])
+    userId String @db.ObjectId//@unique
+    day Day @relation(fields: [today_date], references: [date])
+    today_date String// @unique
+    createdAt DateTime? @default(now())
+    updatedAt DateTime
+}
+
+model Conversation {
+    id String @id @default(auto()) @map("_id") @db.ObjectId
+    name String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    messages Message[]
+    //@@index([name])
+}
+
+model Message {
+    conversation Conversation @relation(fields:[id],references:[id])
+    content String
+    sentBy String //user or assistant
+    createdAt DateTime @default(now())
+    id String @id @default(auto()) @map("_id") @db.ObjectId 
+}
+
